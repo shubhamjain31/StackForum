@@ -5,6 +5,8 @@
 <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <link  rel="StyleSheet" type="text/css" href="{% static 'css/registerAccount.css' %}">
+<link rel="shortcut icon" href="{% static 'images/logo.png' %}"/>
+<title>Sign Up - StackForum</title>
     </head>
 <body>
 <div class="container register">
@@ -12,21 +14,21 @@
                     <div class="col-md-3 register-left">
                         <img src="https://image.ibb.co/n7oTvU/logo_white.png" alt=""/>
                         <h3>Welcome</h3>
-                        <p>You are 30 seconds away from generating your own Caption!</p>
-                        <a href='/login/'><input type="button" value="Login"/></a>
+                        <p>Be a part of our team!</p>
+                        <a href='/login/'><input type="button" class="bg-white" value="Login"/></a>
                         <br/>
                     </div>
-                    <div class="col-md-9 register-right">
+                    <diiv class="col-md-9 register-right">
                         <strong class="ml-5 text-none"></strong>
                         {% for message in messages %}
                         <strong class="ml-5">{{ message }} </strong>
                         {% endfor %}
                         <ul class="nav nav-tabs nav-justified" id="myTab" role="tablist">
                             <li class="nav-item">
-                                <span class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Caption</span>
+                                <span class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Stack</span>
                             </li>
                             <li class="nav-item">
-                                <span class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Generator</sp>
+                                <span class="nav-link" id="profile-tab" data-toggle="tab" href="#profile" role="tab" aria-controls="profile" aria-selected="false">Forum</sp>
 
                             </li>
                         </ul>
@@ -35,7 +37,7 @@
                        
                         <div class="tab-content" id="myTabContent">
                             <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-                                <h3 class="register-heading">Apply as a Employee</h3>
+                                <h3 class="register-heading">Join the StackForum</h3>
                                 <div class="row register-form">
                                     <div class="col-md-6">
                                     <form action="/register/" method="POST" onsubmit="return validateform()" name="myform">{% csrf_token %}
@@ -83,7 +85,7 @@
                                         <div class="form-group">
                                             <input type="text" class="form-control" name="securityAnswer" placeholder="Enter Your Answer *" value="" />
                                         </div>
-                                        <input type="submit" class="btnRegister"  value="Register"/>
+                                        <input type="submit" class="btnRegister"  value="Sign Up"/>
                                     </div>
                                 </form>
                                 </div>
@@ -125,7 +127,7 @@
                                         <div class="form-group">
                                             <input type="text" class="form-control" placeholder="`Answer *" value="" />
                                         </div>
-                                        <input type="submit" class="btnRegister"  value="Register"/>
+                                        <input type="submit" class="btnRegister"  value="Sign Up"/>
                                     </div>
                                 </div>
                             </div>

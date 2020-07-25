@@ -23,19 +23,45 @@ class UserDetail(models.Model):
 	    ]
 	Gender = models.CharField(max_length=1,default='',choices=GENDER_CHOICES)
 
-	def __str__(self):
-		return f'{self.FirstName} {self.LastName}'
+	# def __str__(self):
+	# 	return f'{self.FirstName} {self.LastName}'
 
+class Votes(models.Model):
+	class params:
+		db = 'default'
+	userId = models.CharField(max_length=50)
+	voteType = models.IntegerField(blank=True)		# 0 for down 1 for up
+	class Meta:
+		abstract = True
 
 class Questions(models.Model):
 	class params:
 		db = 'default'
 	userId = models.CharField(max_length=50)
-	questionId = models.UUIDField(default=uuid.uuid4().hex, editable=True, unique=True)
+	questionId = models.UUIDField(default=uuid.uuid4, editable=True, unique=True)
 	question = models.TextField()
-	votes = models.IntegerField(default=0,blank=True)
+	totalVotes = models.IntegerField(default=0,blank=True)
 	date = models.DateTimeField(auto_now_add=True, blank=True)
-	User = models.ForeignKey(UserDetail,on_delete=models.CASCADE)
+	User = models.ForeignKey(UserDetail,on_delete=models.CASCADE,related_name='user')
+	voteDetails = models.ArrayField(model_container=Votes)
 
-	def __str__(self):
-		return self.userId
+
+	# def __str__(self):
+	# 	return self.userId
+
+
+class Blog(models.Model):
+    name = models.CharField(max_length=100)
+    tagline = models.TextField()
+
+    class Meta:
+        abstract = True
+
+class Entry(models.Model):
+    _id = models.ObjectIdField()
+    blog = models.EmbeddedField(
+        model_container=Blog
+    )
+    
+    headline = models.CharField(max_length=255)    
+    objects = models.DjongoManager()

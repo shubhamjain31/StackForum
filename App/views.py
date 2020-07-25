@@ -7,10 +7,15 @@ from django.contrib import messages
 import uuid
 
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Case, Value, When
+
 def index(request):
-	AllQuestions = Questions.objects.all().order_by('-date')
-	params = {'AllQuestions':AllQuestions}
-	return render(request,'index.html',params)
+	if request.session.has_key('user'):
+		AllQuestions = Questions.objects.all().order_by('-date')
+		params = {'AllQuestions':AllQuestions,'user':request.session['user']}
+		return render(request,'index.html',params)
+	else:
+		return HttpResponseRedirect('/login')
 
 
 def register(request):
@@ -43,8 +48,11 @@ def login(request):
 	if request.method == 'POST':
 		email = request.POST.get("email")
 		password = request.POST.get("password")
-		loginValidate = UserDetail.objects.get(Email=email)
-		encryptPass = loginValidate.Password
+		try:
+			loginValidate = UserDetail.objects.get(Email=email)
+			encryptPass = loginValidate.Password
+		except:
+			return HttpResponseRedirect('/login')
 
 		if check_password(password,encryptPass) == True:
 			request.session['user'] = str(loginValidate.UserId)
@@ -57,6 +65,14 @@ def login(request):
 			return HttpResponseRedirect('/')
 		else:
 			return render(request,'signin.html')
+
+def logout(request):
+	if request.session.has_key('user'):
+		del request.session['user']
+		return HttpResponseRedirect('/login')
+	else:
+		#messages.warning(request,'You are already logout. Please login...')
+		return render(request,'index.html')
 
 def test(request):
 	del request.session['user']
@@ -74,18 +90,77 @@ def askaquestion(request):
 def vote(request):
 	questionId = request.POST.get('questionId')
 	action = request.POST.get('action')
-	sum = 0
 	if action == 'up':
-		vote = Questions.objects.get(questionId=questionId).votes
-		vote = vote + 1
-		v = Questions.objects.filter(questionId=questionId).update(votes=vote)
+		voteType = 1
+	voteData = Questions.objects.get(questionId=questionId).voteDetails
+	print(voteData)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	# elif action == 'down':
+	# 	voteType = -1
+	# else:
+	# 	pass
+	
+	# if Votes.objects.using('second').filter(questionId=questionId,userId=userId).exists():
+	# 	Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
+	# 	).update(voteType=Case(
+	# 		When(voteType=1, then=Value(-1)),
+	# 		When(voteType=-1,then=Value(1)),
+	# 	)
+
+	# else:
+	# 	Votes(questionId=questionId,userId=request.session['user'],voteType=voteType).save(using='second')
+
+
+	if action == 'up':
+		vote, is_created = Votes.objects.get_or_create(questionId=questionId,userId=request.session['user'],voteType=1)
+		if is_created:
+			vote = Questions.objects.get(questionId=questionId).votes
+			vote += 1
+			Questions.objects.filter(questionId=questionId).update(votes=vote)
+
+		# Questions.objects.filter(questionId=questionId).update(votes=F('votes') + 1)
 	elif action == 'down':
 		vote = Questions.objects.get(questionId=questionId).votes
-		if vote <= 0:
-			vote = 0
-		else:
-			vote = vote - 1
-		v = Questions.objects.filter(questionId=questionId).update(votes=vote)
+		vote = vote - 1
+		Questions.objects.filter(questionId=questionId).update(votes=vote)
 		
 	print(questionId,action)
 	return HttpResponse('done')
+
+def search(request):
+	flag = False
+	
+	query = request.GET['search']
+	print(query)
+	if len(query)>20:
+		allQuestions = Questions.objects.none()
+	else:
+		allQuestions = Questions.objects.filter(question__icontains=query)
+	if allQuestions.count() == 0:
+		messages.warning(request,'No search results found. Please refine your query')
+	if request.session.has_key('is_logged'):
+		flag = True
+		params = {'allQuestions':allQuestions,'query':query,'flag':flag}
+	else:
+		params = {'allQuestions':allQuestions,'query':query,'flag':flag}
+	return render(request,'search.html',params)

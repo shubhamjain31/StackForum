@@ -1,8 +1,8 @@
 import App.models
 allmodels = dict([(name.lower(), cls) for name, cls in App.models.__dict__.items() if isinstance(cls, type)])
-
+# print(allmodels)
 class DbRouter(object):
-    route_app_labels = {'default'}
+    route_app_labels = {'default','second'}
     def allow_relation(self, obj1, obj2, **hints):
         if (
             obj1._meta.app_label in self.route_app_labels or
@@ -19,5 +19,3 @@ class DbRouter(object):
             return(model.params.db == db)
         except:
             pass
-            
-    

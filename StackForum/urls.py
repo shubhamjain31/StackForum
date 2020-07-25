@@ -24,8 +24,10 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('askaquestion/', views.askaquestion, name='askaquestion'),
     path('login/', views.login, name='login'),
+    path('logout/', views.logout, name='logout'),
     path('register/', views.register, name='register'),
     path('vote/', views.vote, name='vote'),
     path('test/', views.test, name='test'),
+    path("search/",views.search,name="search"),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

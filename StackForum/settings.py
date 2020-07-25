@@ -79,8 +79,18 @@ DATABASES = {
     'default': {
         'ENGINE': 'djongo',
         'NAME': 'stackforum',
+    },
+    'second' : {
+        'ENGINE' : 'django.db.backends.mysql',
+        'NAME' : 'stackforum',
+        'USER' : 'root',
+        'PASSWORD' : 'root',
+        'HOST' : 'localhost',
     }
 }
+
+DATABASE_ROUTERS = ['App.routers.DbRouter']
+
 
 
 # Password validation
