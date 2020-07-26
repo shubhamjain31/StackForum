@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse, HttpResponseRedirect
-from django.db.models import F
 from .models import *
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
@@ -92,59 +91,49 @@ def vote(request):
 	action = request.POST.get('action')
 	if action == 'up':
 		voteType = 1
-	voteData = Questions.objects.get(questionId=questionId).voteDetails
-	print(voteData)
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	# elif action == 'down':
-	# 	voteType = -1
-	# else:
-	# 	pass
-	
-	# if Votes.objects.using('second').filter(questionId=questionId,userId=userId).exists():
-	# 	Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
-	# 	).update(voteType=Case(
-	# 		When(voteType=1, then=Value(-1)),
-	# 		When(voteType=-1,then=Value(1)),
-	# 	)
-
-	# else:
-	# 	Votes(questionId=questionId,userId=request.session['user'],voteType=voteType).save(using='second')
-
-
-	if action == 'up':
-		vote, is_created = Votes.objects.get_or_create(questionId=questionId,userId=request.session['user'],voteType=1)
-		if is_created:
-			vote = Questions.objects.get(questionId=questionId).votes
-			vote += 1
-			Questions.objects.filter(questionId=questionId).update(votes=vote)
-
-		# Questions.objects.filter(questionId=questionId).update(votes=F('votes') + 1)
 	elif action == 'down':
-		vote = Questions.objects.get(questionId=questionId).votes
-		vote = vote - 1
-		Questions.objects.filter(questionId=questionId).update(votes=vote)
+		voteType = -1
+	else:
+		pass
+	
+	voteRecord = Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user'])	
+	upVoteRecord = voteRecord.using('second').filter(voteType=1)
+	downVoteRecord = voteRecord.using('second').filter(voteType=-1)
+	voteCount = Questions.objects.get(questionId=questionId).totalVotes
+
+	if upVoteRecord and action == 'up':
+		print('1')
+		pass
+	elif upVoteRecord and action == 'down':
+		print('2')
+		Questions.objects.filter(questionId=questionId).update(totalVotes=voteCount - 1)
+	
+	elif downVoteRecord and action == 'down':
+		print('3')
+		pass
+	elif downVoteRecord and action == 'up':
+		print('4')
+		Questions.objects.filter(questionId=questionId).update(totalVotes=voteCount + 1)
+
+
+	if voteRecord and action == 'up':
+		Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
+		).update(voteType=Case(
+			When(voteType=1, then=Value(1)),
+			When(voteType=-1,then=Value(1)),
+		))
 		
-	print(questionId,action)
+	elif voteRecord and action == 'down':
+		Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
+		).update(voteType=Case(
+			When(voteType=1, then=Value(-1)),
+			When(voteType=-1,then=Value(-1)),
+		))
+		
+	else:
+		Votes(questionId=questionId,userId=request.session['user'],voteType=voteType).save(using='second')
+		Questions.objects.filter(questionId=questionId).update(totalVotes = voteCount + voteType)
+	
 	return HttpResponse('done')
 
 def search(request):
