@@ -1,21 +1,62 @@
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse, HttpResponseRedirect
+from django.db.models import Count
 from .models import *
+from . import accountSettings
 from django.contrib.auth.hashers import make_password, check_password
-from django.contrib import messages
 import uuid
+from django.contrib import messages
 
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Case, Value, When
+import datetime
+
+
+@property
+def loggedUser(request):
+	if request.session.has_key('user'):
+		return request.session['user']
+	else:
+		return None
+
+print(loggedUser)
+
+@csrf_exempt
+def sessionval(request):
+	if request.session.has_key('user'):
+		return JsonResponse({'Result':True})
+	else:
+		return JsonResponse({'Result':False})
+		
+def recent(request):
+	recentQuestions = Questions.objects.all().order_by('-date')
+	params = {'AllQuestions':recentQuestions,'class_':'recent'}
+	return render(request,'index.html',params)
+
+def mostAnswered(request):
+	mostAnswered = Questions.objects.annotate(count=Count('answers')).order_by('-count')
+	params = {'AllQuestions':mostAnswered,'class_':'mostAnswered'}
+	return render(request,'index.html',params)
+
+def mostVisited(request):
+	mostVisited = Questions.objects.annotate(count=Count('Views')).order_by('-count')
+	params = {'AllQuestions':mostVisited,'class_':'mostVisited'}
+	return render(request,'index.html',params)
+
+def mostPopular(request):
+	mostPopular = Questions.objects.all().order_by('-totalVotes','-Views')
+	params = {'AllQuestions':mostPopular,'class_':'mostPopular'}
+	return render(request,'index.html',params)
 
 def index(request):
-	if request.session.has_key('user'):
-		AllQuestions = Questions.objects.all().order_by('-date')
-		params = {'AllQuestions':AllQuestions,'user':request.session['user']}
-		return render(request,'index.html',params)
-	else:
-		return HttpResponseRedirect('/login')
-
+	recentQuestions = Questions.objects.all().order_by('-date')
+	params = {'AllQuestions':recentQuestions,'class_':'recent'}
+	return render(request,'index.html',params)
+	
+def profile(request, id):
+	userInfo = UserDetail.objects.get(UserId=id)
+	params = {'user':userInfo}
+	return render(request, 'Profile.html', params)
 
 def register(request):
 	if request.session.has_key('user'):
@@ -24,22 +65,22 @@ def register(request):
 		if request.method == 'POST':
 			fName = request.POST.get('fName')
 			lName = request.POST.get('lName')
-			userId = fName + lName + str(uuid.uuid4().hex)[:10]
+			
+			email = request.POST.get('email')
+			mobile = request.POST.get('mobile')
+			age = request.POST.get('age')
 			password = request.POST.get('password')
 			confirmPassword = request.POST.get('confirmPassword')
 			gender = request.POST.get('gender')[0]
-			email = request.POST.get('email')
 			securityQuestion = request.POST.get('securityQuestion')
 			securityAnswer = request.POST.get('securityAnswer')
 
-			if UserDetail.objects.filter(Email=email):
-				messages.success(request,f"Account Already Present with {email} !!")
-				return render(request,'registerAccount.html')
-			else:
-				UserDetail(UserId=userId,FirstName=fName,LastName=lName,Password=make_password(password),
-				SecurityQuestion=securityQuestion,SecurityAnswer=securityAnswer,Gender=gender,Email=email).save()
-				messages.success(request,f"Welcome Aboard: {fName} {lName} !!")
-				return render(request,'registerAccount.html')
+			account_register_report = accountSettings.registerNewAccount(
+				fName=fName,lName=lName,email=email,mobile=mobile,age=age,password=password,confirmPassword=confirmPassword,
+				gender=gender,securityQuestion=securityQuestion,securityAnswer=securityAnswer
+			)
+			messages.success(request,account_register_report)
+			return render(request,'registerAccount.html')
 		else:
 			return render(request,'registerAccount.html')
 
@@ -47,18 +88,15 @@ def login(request):
 	if request.method == 'POST':
 		email = request.POST.get("email")
 		password = request.POST.get("password")
-		try:
-			loginValidate = UserDetail.objects.get(Email=email)
-			encryptPass = loginValidate.Password
-		except:
-			return HttpResponseRedirect('/login')
-
-		if check_password(password,encryptPass) == True:
-			request.session['user'] = str(loginValidate.UserId)
-			
-			return HttpResponseRedirect('/')
-		else:
+		login_status = accountSettings.loginToAccount(
+			email=email,password=password
+		)
+		if not login_status:
 			return render(request,'signin.html',{'message':'Please Check Your Email and Password'})
+		else:
+			request.session['user'] = login_status
+			return HttpResponseRedirect('/')
+		
 	else:
 		if request.session.has_key('user'):
 			return HttpResponseRedirect('/')
@@ -68,88 +106,39 @@ def login(request):
 def logout(request):
 	if request.session.has_key('user'):
 		del request.session['user']
-		return HttpResponseRedirect('/login')
+		return HttpResponseRedirect('/')
 	else:
-		#messages.warning(request,'You are already logout. Please login...')
-		return render(request,'index.html')
-
-def test(request):
-	del request.session['user']
-	return HttpResponse('done')
-
+		return HttpResponseRedirect('/')
 
 @csrf_exempt
 def askaquestion(request):
 	questionVal = request.POST.get('questionValue')
 	user = UserDetail.objects.get(UserId=request.session['user'])
-	Questions(userId=request.session['user'],question=questionVal,User=user).save()
+	Questions(question=questionVal,User=user).save()
 	return JsonResponse({'Result':'Success'})
 
+def answer(request,id):
+	questionData = Questions.objects.get(questionId=id)
+	AllAnswers = questionData.answers
+	params = {'AllAnswers':AllAnswers,'questionData':questionData}
+	return render(request,'answers.html',params)
+	
 @csrf_exempt
-def vote(request):
-	questionId = request.POST.get('questionId')
-	action = request.POST.get('action')
-	if action == 'up':
-		voteType = 1
-	elif action == 'down':
-		voteType = -1
+def postanswer(request):
+	qid = request.POST.get('questionId')
+	answer = request.POST.get('answer')
+	answerId = uuid.uuid4()
+	questionObj = Questions.objects.get(questionId=qid)
+	if not questionObj.answers:
+		questionObj.answers = [{
+		'answerId':answerId,'answer':answer,
+		'totalVotes':0,'date':datetime.datetime.now(),'User':request.session['user']
+		}]
 	else:
-		pass
+		questionObj.answers.append({
+			'answerId':answerId,'answer':answer,
+			'totalVotes':0,'date':datetime.datetime.now(),'User':request.session['user']
+		})
+	questionObj.save()
 	
-	voteRecord = Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user'])	
-	upVoteRecord = voteRecord.using('second').filter(voteType=1)
-	downVoteRecord = voteRecord.using('second').filter(voteType=-1)
-	voteCount = Questions.objects.get(questionId=questionId).totalVotes
-
-	if upVoteRecord and action == 'up':
-		print('1')
-		pass
-	elif upVoteRecord and action == 'down':
-		print('2')
-		Questions.objects.filter(questionId=questionId).update(totalVotes=voteCount - 1)
-	
-	elif downVoteRecord and action == 'down':
-		print('3')
-		pass
-	elif downVoteRecord and action == 'up':
-		print('4')
-		Questions.objects.filter(questionId=questionId).update(totalVotes=voteCount + 1)
-
-
-	if voteRecord and action == 'up':
-		Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
-		).update(voteType=Case(
-			When(voteType=1, then=Value(1)),
-			When(voteType=-1,then=Value(1)),
-		))
-		
-	elif voteRecord and action == 'down':
-		Votes.objects.using('second').filter(questionId=questionId,userId=request.session['user']
-		).update(voteType=Case(
-			When(voteType=1, then=Value(-1)),
-			When(voteType=-1,then=Value(-1)),
-		))
-		
-	else:
-		Votes(questionId=questionId,userId=request.session['user'],voteType=voteType).save(using='second')
-		Questions.objects.filter(questionId=questionId).update(totalVotes = voteCount + voteType)
-	
-	return HttpResponse('done')
-
-def search(request):
-	flag = False
-	
-	query = request.GET['search']
-	print(query)
-	if len(query)>20:
-		allQuestions = Questions.objects.none()
-	else:
-		allQuestions = Questions.objects.filter(question__icontains=query)
-	if allQuestions.count() == 0:
-		messages.warning(request,'No search results found. Please refine your query')
-	if request.session.has_key('is_logged'):
-		flag = True
-		params = {'allQuestions':allQuestions,'query':query,'flag':flag}
-	else:
-		params = {'allQuestions':allQuestions,'query':query,'flag':flag}
-	return render(request,'search.html',params)
+	return HttpResponseRedirect('/answer/'+qid+'/')

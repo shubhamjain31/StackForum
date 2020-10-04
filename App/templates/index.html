@@ -1,37 +1,14 @@
-{% extends 'basic.html' %}
+{% extends 'base.html' %}
 {% load static %}
-{% block title %} Home - StackForum {% endblock %}
 
 {% block body %}
-
-<body>    
-
-    <!-- Banner Image -->
-    <div class="bannerWrapper">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 col-md-8 col-sm-12 col-12">
-                    <br><br>
-                    <h4>Share & grow the world's knowledge!</h4><br>
-                    <p>We want to connect the people who have knowledge to the people who need it, to bring together
-                        people with different perspectives so they can understand each other better, and to empower
-                        everyone to share their knowledge.</p>
-                </div>
-                <div class="col-lg-4 col-md-4 col-sm-12 col-12">
-                    <br><br>
-                    {% if not user %}
-                    <a href="#" class="btn btn-primary" style="position:absolute;bottom:0;">Create A New Account</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Main Area -->
     <div class="container">
         <div class="row">
             <div class="col-lg-2 col-md-2 col-sm-12 col-12">
-                <a href="#" class="leftSideDivOpt">
+                <a href="/" class="leftSideDivOpt">
                     <h6><i class="fas fa-home"></i>Home</h6>
                 </a>
                 
@@ -61,23 +38,25 @@
             <div class="col-lg-7 col-md-7 col-sm-12 col-12">
                 <!-- Tab links -->
                 <div class="tab">
-                    <button class="tablinks" onclick="openCity(event, 'Recent_Question')">Recent Question</button>
-                    <button class="tablinks" onclick="openCity(event, 'Most_Answered')">Most Answered</button>
-                    <button class="tablinks" onclick="openCity(event, 'Question_Bump')">Question Bump</button>
-                    <button class="tablinks" onclick="openCity(event, 'Answers')">Answers</button>
-                    <button class="tablinks" onclick="openCity(event, 'Most_Visited')">Most visited</button>
-                    <button class="tablinks" onclick="openCity(event, 'Another')">...</button>
+                    <a href="/recent/"><button class="tablinks {% if class_ == 'recent' %} active {% endif %}">Recent Question</button></a>
+                    <a href="/mostAnswered/"><button class="tablinks {% if class_ == 'mostAnswered' %} active {% endif %}">Most Answered</button></a>
+                    <a href="/mostVisited/"><button class="tablinks {% if class_ == 'mostVisited' %} active {% endif %}">Most visited</button></a>
+                    <a href="/mostPopular/"><button class="tablinks {% if class_ == 'mostPopular' %} active {% endif %}">Most Popular</button></a>
                 </div>
 
                 <!-- Tab content -->
-                <div id="Recent_Question" class="tabcontent">
+                <div id="Recent_Question" class="tabcontent" style="display: block;">
 
                     {% for question in AllQuestions %}
+                    
                     <div class="border-bottom pb-2">
                         <h6>
                             
                             <img src="{{question.User.profilePic.url}}" class="midprofile">
-                            <span class="mr-2">{{question.User.FirstName|title}} {{question.User.LastName}}</span>
+                            <a href="/profile/{{question.User.UserId}}">
+                            <span class="mr-2">{{question.User.FirstName}} {{question.User.LastName}}</span>
+                            </a>
+                            
                             <span class="mr-1 btn-warning">Enlightened</span>
                             <span style="color:grey;font-size:small;">Asked:<span> April 19, 2018</span></span>
                             <span style="color:grey;font-size:small;" class="ml-2">In:<span>Programmers</span></span>
@@ -91,72 +70,56 @@
                                 <center>
 
                                     <h3 style="cursor: pointer;color:grey;font-weight: bolder;">
-                                        <span onclick="votes('up--{{question.questionId}}')"
+                                        <span onclick="votes('up--{{question.questionId}}')" data-href="{{question.questionId}}"
                                             class="material-icons" onclick="">
                                             arrow_drop_up
                                         </span><br>
-                                        <span>{{question.totalVotes}}</span><br>
+                                        <span id="{{question.questionId}}">{{question.totalVotes}}</span><br>
                                         <span class="material-icons" onclick="votes('down--{{question.questionId}}')">
                                             arrow_drop_down
                                         </span></h3>
                                 </center>
                             </div>
                             <div class="col-lg-10 col-md-10 col-sm-10 col-10">
-                                <span style="font-size:large;font-weight: bold;">{{question.question}}</span>
-                                <br><span style="color:gray">A friend of mine is the CEO of his own small business.
-                                    We’re
-                                    not very close friends, but we know each other well enough to have visited each
-                                    other’s
-                                    houses for dinner and drinks a few times. His business is advertising ...</span>
+                                <span style="font-size:large;font-weight: bold;">
+                                    
+                                {{question.question}}
+                                
+                                </span>
+                                <br>
+                                <span style="color:gray">
+                                    {{answer.User.FirstName}} {{answer.User.LastName}}
+                                    {% if not question.answers %}
+                                    <span> No answers Yet</span>
+                                    {% endif %}
+                                   
+                                    <!-- {{question.answer|slice:1}} -->
+                                    {% for ans in question.answers|slice:1  %}
+                                    {{ans.answer  }}
+                                    <br>
+                                    {% endfor %}
+                                    
+                                    </span>
                                 <div class="midDivinnerSect">
-                                    <button>6 Answer</button>
-                                    <button>1k Views</button>
-                                    <button class="float-right"><strong>Answer</strong></button>
+                                    <button>{{question.answers|length}} Answers</button>
+                                    <button>{{question.Views}} Views</button>
+                                    <button class="float-right">
+                                    <a href="/answer/{{question.questionId}}">
+                                        <strong class='answer' data-href="{{question.questionId}}">Answer</strong></button>
+                                    </a>
                                 </div>
-
+                                
                             </div>
                         </div>
                     </div>
-                    <button class="btn btn-secondary btn-block mt-4">Load more Questions</button>
                     {% endfor %}
-                </div>
-
-                <div id="Most_Answered" class="tabcontent">
-                    <h3>Most_Answered</h3>
-                    <p>Paris is the capital of France.</p>
-                </div>
-
-                <div id="Question_Bump" class="tabcontent">
-                    <h3>Question_Bump</h3>
-                    <p>Tokyo is the capital of Japan.</p>
-                </div>
-                <div id="Answers" class="tabcontent">
-                    <h3>Recent_Question</h3>
-                    <p>London is the capital city of England.</p>
-                </div>
-
-                <div id="Most_Visited" class="tabcontent">
-                    <h3>Most_Answered</h3>
-                    <p>Paris is the capital of France.</p>
-                </div>
-
-                <div id="Another" class="tabcontent">
-                    <h3>Another</h3>
-                    <p>Tokyo is the capital of Japan.</p>
                 </div>
 
             </div>
             <div class="col-lg-3 col-md-3 col-sm-12 col-12">
                 <div class="rightSideDiv">
-                    
-                    <!-- Button trigger modal -->
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">
-                      Ask a Question
-                    </button>
-
-                    
-
-                    <hr>
+                
+                    <br>
                     <table>
                         <tr>
                             <td class="border">
@@ -270,41 +233,9 @@
 
         
     </div>
-    <!-- Ask Question Modal Start -->
-        <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalCenterTitle">Ask a Question</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <form method="POST">{% csrf_token %}
-                    <textarea name="question" id="question" placeholder="Type Your Question" class="w-100 " style="resize: none;" >
-                        
-                    </textarea>
-                </form>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" id="questionbtn" class="btn btn-primary" data-dismiss="modal">Save changes</button>
-              </div>
-            </div>
-          </div>
-        </div>
-<!-- Modal End -->
+
+
+
 {% endblock %}
 
-{% block js %}
-<script type="text/javascript">
-        $('document').ready(function()
-{
-    $('textarea').each(function(){
-            $(this).val($(this).val().trim());
-        }
-    );
-});
-    </script>
-{% endblock %}
+</html>
