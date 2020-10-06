@@ -12,6 +12,7 @@ This Django project implements a simple questions/answers forum where questions 
 
 # Screenshots:
 
-![Image](https://github.com/shubhamjain31/StackForum/blob/master/Screenshots/IMG-20201006-WA0003.jpg)
+![Image](https://github.com/shubhamjain31/StackForum/blob/master/Screenshots/IMG-20201006-WA0003.jpg)  
+
 
 ![Image](https://github.com/shubhamjain31/StackForum/blob/master/Screenshots/IMG-20201006-WA0009.jpg)
