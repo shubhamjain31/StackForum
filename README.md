@@ -6,10 +6,12 @@ This Django project implements a simple questions/answers forum where questions 
 
 # Tools:
 - Python
-- Python django for http server
+- Django for http server
 - HTML/CSS/Javascript
 - Visual studio code
 
 # Screenshots:
 
 ![Image](https://github.com/shubhamjain31/StackForum/blob/master/Screenshots/IMG-20201006-WA0003.jpg)
+
+![Image](https://github.com/shubhamjain31/StackForum/blob/master/Screenshots/IMG-20201006-WA0009.jpg)
